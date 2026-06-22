@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpotiFLAC Mobile - Lossless Music Downloader</title>
+  <meta name="description" content="Mobile music utility built with Flutter and Go. High-quality audio management for your personal library.">
+  <meta name="theme-color" content="#0a0a0a">
+
+  <meta property="og:title" content="SpotiFLAC Mobile">
+  <meta property="og:description" content="Mobile music utility built with Flutter and Go. High-quality audio management for your personal library.">
+  <meta property="og:image" content="icon.png">
+  <meta property="og:type" content="website">
+
+  <link rel="icon" href="icon.png" type="image/png">
+
+  <style>
+    @font-face { font-family: 'Google Sans Flex'; font-style: normal; font-display: swap; font-weight: 400; src: url(https://cdn.jsdelivr.net/fontsource/fonts/google-sans-flex@latest/latin-400-normal.woff2) format('woff2'); }
+    @font-face { font-family: 'Google Sans Flex'; font-style: normal; font-display: swap; font-weight: 500; src: url(https://cdn.jsdelivr.net/fontsource/fonts/google-sans-flex@latest/latin-500-normal.woff2) format('woff2'); }
+    @font-face { font-family: 'Google Sans Flex'; font-style: normal; font-display: swap; font-weight: 600; src: url(https://cdn.jsdelivr.net/fontsource/fonts/google-sans-flex@latest/latin-600-normal.woff2) format('woff2'); }
+    @font-face { font-family: 'Google Sans Flex'; font-style: normal; font-display: swap; font-weight: 700; src: url(https://cdn.jsdelivr.net/fontsource/fonts/google-sans-flex@latest/latin-700-normal.woff2) format('woff2'); }
+    @font-face { font-family: 'Google Sans Flex'; font-style: normal; font-display: swap; font-weight: 800; src: url(https://cdn.jsdelivr.net/fontsource/fonts/google-sans-flex@latest/latin-800-normal.woff2) format('woff2'); }
+  </style>
+
+  <style>
+    :root {
+      --green: #1DB954;
+      --green-dim: #1aa34a;
+      --bg: #0a0a0a;              /* surfaceContainerLow  */
+      --bg-card: #1a1a1a;         /* surfaceContainerHigh */
+      --bg-card-hover: #222222;   /* surfaceContainerHighest */
+      --surface: #121212;         /* surfaceContainer */
+      --text: #e8e8e8;            /* onSurface */
+      --text-dim: #999;           /* onSurfaceVariant */
+      --max-w: 1100px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; scrollbar-width: thin; scrollbar-color: #333 transparent; }
+    html::-webkit-scrollbar { width: 8px; }
+    html::-webkit-scrollbar-track { background: transparent; }
+    html::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+    html::-webkit-scrollbar-thumb:hover { background: #555; }
+
+    body {
+      font-family: 'Google Sans Flex', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--green); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(18,18,18,.78);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+    .nav-inner {
+      max-width: var(--max-w); margin: auto;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; height: 64px;
+    }
+    .nav-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem; color: var(--text); }
+    .nav-brand img { width: 32px; height: 32px; border-radius: 50%; }
+    .nav-links { display: flex; align-items: center; gap: 24px; list-style: none; }
+    .nav-links a { color: var(--text-dim); font-size: .9rem; transition: color .2s; }
+    .nav-links a:hover { color: var(--text); text-decoration: none; }
+    .nav-links a.active { color: var(--text); font-weight: 600; }
+    .nav-links .nav-icon { display: flex; align-items: center; opacity: .6; transition: opacity .2s; margin-left: -12px; }
+    .nav-links .nav-icon:hover { opacity: 1; }
+    .nav-links .nav-icon svg { width: 24px; height: 24px; fill: currentColor; }
+    .nav-links .nav-divider { width: 1px; height: 20px; background: rgba(255,255,255,.15); margin-left: -4px; }
+    .search-trigger {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
+      border-radius: 8px; padding: 6px 12px;
+      color: var(--text-dim); font-size: .85rem; cursor: pointer;
+      font-family: inherit; transition: color .2s, border-color .2s, background .2s;
+      white-space: nowrap; text-decoration: none;
+    }
+    .search-trigger:hover { color: var(--text); border-color: rgba(255,255,255,.25); background: rgba(255,255,255,.1); text-decoration: none; }
+    .search-trigger svg { width: 14px; height: 14px; fill: currentColor; flex-shrink: 0; }
+    .search-trigger kbd {
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 4px; padding: 0px 4px; font-size: .65rem;
+      font-family: inherit; color: #555; line-height: 1.4; margin-left: 2px;
+    }
+
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 100px 24px 60px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(29,185,84,.05) 0%, transparent 50%);
+    }
+    .hero h1 { font-size: clamp(2.2rem, 5vw, 3.5rem); font-weight: 800; letter-spacing: -1px; margin-bottom: 12px; }
+    .hero h1 span { color: var(--green); }
+    .hero p { font-size: 1.15rem; color: var(--text-dim); max-width: 520px; margin-bottom: 8px; }
+    .hero-badges { display: flex; gap: 8px; justify-content: center; margin: 16px 0 32px; flex-wrap: wrap; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 16px; border-radius: 999px;
+      font-size: .8rem; font-weight: 600;
+      background: var(--surface); color: var(--text-dim);
+    }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 28px; border-radius: 16px;
+      font-size: .95rem; font-weight: 600;
+      transition: background .2s; cursor: pointer; border: none;
+    }
+    .btn-primary { background: var(--green); color: #000; }
+    .btn-primary:hover { background: var(--green-dim); text-decoration: none; }
+    .btn-secondary { background: var(--bg-card); color: var(--text); }
+    .btn-secondary:hover { background: var(--bg-card-hover); text-decoration: none; }
+
+    section { padding: 80px 24px; }
+    .section-inner { max-width: var(--max-w); margin: auto; }
+    .section-title { font-size: 1.8rem; font-weight: 700; text-align: center; margin-bottom: 12px; }
+    .section-sub { text-align: center; color: var(--text-dim); max-width: 560px; margin: 0 auto 48px; }
+
+    .features-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+    }
+    .feature-card {
+      background: var(--bg-card); border-radius: 20px;
+      padding: 28px 24px; transition: background .2s;
+    }
+    .feature-card:hover { background: var(--bg-card-hover); }
+    .feature-icon {
+      width: 40px; height: 40px; border-radius: 12px;
+      background: rgba(29,185,84,.12); color: var(--green);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 16px; font-size: 1.2rem;
+    }
+    .feature-card h3 { font-size: 1.05rem; margin-bottom: 6px; }
+    .feature-card p { color: var(--text-dim); font-size: .9rem; }
+
+    .faq-list { max-width: 700px; margin: auto; display: flex; flex-direction: column; gap: 8px; }
+    .faq-item {
+      background: var(--bg-card); border-radius: 16px;
+    }
+    .faq-item summary {
+      cursor: pointer; font-weight: 600; font-size: 1rem;
+      list-style: none; display: flex; justify-content: space-between; align-items: center;
+      padding: 18px 20px;
+    }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary::after { content: "+"; font-size: 1.4rem; color: var(--text-dim); transition: transform .2s; }
+    .faq-item[open] summary::after { content: "\2212"; }
+    .faq-item .faq-answer { padding: 0 20px 18px; color: var(--text-dim); font-size: .92rem; line-height: 1.7; }
+
+    footer {
+      background: var(--surface);
+      padding: 40px 24px; text-align: center;
+    }
+    .footer-inner { max-width: var(--max-w); margin: auto; }
+    .footer-links { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; }
+    .footer-links a { color: var(--text-dim); font-size: .9rem; }
+    .footer-links a:hover { color: var(--text); }
+    .footer-copy { color: #555; font-size: .8rem; }
+
+    .nav-burger {
+      display: none; width: 40px; height: 40px; border-radius: 12px;
+      background: none; border: none; cursor: pointer;
+      align-items: center; justify-content: center; flex-shrink: 0;
+      position: relative;
+    }
+    .nav-burger .bar {
+      display: block; width: 20px; height: 2px; background: var(--text);
+      border-radius: 2px; transition: transform .3s cubic-bezier(.4,0,.2,1), opacity .2s;
+      position: absolute; left: 10px;
+    }
+    .nav-burger .bar:nth-child(1) { top: 12px; }
+    .nav-burger .bar:nth-child(2) { top: 19px; }
+    .nav-burger .bar:nth-child(3) { top: 26px; }
+    .nav-burger.active .bar:nth-child(1) { top: 19px; transform: rotate(45deg); }
+    .nav-burger.active .bar:nth-child(2) { opacity: 0; }
+    .nav-burger.active .bar:nth-child(3) { top: 19px; transform: rotate(-45deg); }
+    .mobile-overlay {
+      position: fixed; top: 64px; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,.5); z-index: 98;
+      opacity: 0; pointer-events: none;
+      transition: opacity .3s cubic-bezier(.4,0,.2,1);
+    }
+    .mobile-overlay.open { opacity: 1; pointer-events: auto; }
+    .mobile-menu {
+      position: fixed; top: 64px; left: 0; right: 0;
+      background: rgba(18,18,18,.95); padding: 8px 16px 16px; z-index: 99;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      transform: translateY(-8px); opacity: 0; pointer-events: none;
+      transition: transform .3s cubic-bezier(.4,0,.2,1), opacity .3s cubic-bezier(.4,0,.2,1);
+    }
+    .mobile-menu.open { transform: translateY(0); opacity: 1; pointer-events: auto; }
+    .mobile-menu a {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px; border-radius: 12px;
+      color: var(--text-dim); font-size: .95rem; font-weight: 500;
+      transition: background .2s; opacity: 0; transform: translateY(-6px);
+    }
+    .mobile-menu.open a {
+      opacity: 1; transform: translateY(0);
+      transition: background .2s, opacity .3s cubic-bezier(.4,0,.2,1), transform .3s cubic-bezier(.4,0,.2,1);
+    }
+    .mobile-menu.open a:nth-child(1) { transition-delay: .03s; }
+    .mobile-menu.open a:nth-child(2) { transition-delay: .06s; }
+    .mobile-menu.open a:nth-child(3) { transition-delay: .09s; }
+    .mobile-menu.open a:nth-child(4) { transition-delay: .12s; }
+    .mobile-menu.open a:nth-child(5) { transition-delay: .15s; }
+    .mobile-menu a:hover { background: var(--bg-card); color: var(--text); text-decoration: none; }
+    .mobile-menu a.active { color: var(--text); font-weight: 600; background: var(--bg-card); }
+    .mobile-menu .mobile-divider {
+      height: 1px; background: rgba(255,255,255,.06); margin: 4px 0;
+      opacity: 0; transition: opacity .3s .15s;
+    }
+    .mobile-menu.open .mobile-divider { opacity: 1; }
+    .mobile-menu .mobile-icons {
+      display: flex; gap: 8px; padding: 8px 16px 0;
+      opacity: 0; transform: translateY(-6px);
+      transition: opacity .3s cubic-bezier(.4,0,.2,1) .18s, transform .3s cubic-bezier(.4,0,.2,1) .18s;
+    }
+    .mobile-menu.open .mobile-icons { opacity: 1; transform: translateY(0); }
+    .mobile-menu .mobile-icons a {
+      padding: 10px; border-radius: 12px; background: var(--bg-card);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 1; transform: none;
+    }
+    .mobile-menu .mobile-icons a svg { width: 20px; height: 20px; fill: currentColor; }
+
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .nav-burger { display: flex; }
+      .hero { padding: 80px 16px 40px; }
+      section { padding: 60px 16px; }
+    }
+
+    .hero-mockups {
+      display: flex; gap: 20px; justify-content: center; align-items: flex-end;
+      margin-top: 48px; perspective: 800px;
+    }
+    .phone-frame {
+      width: 180px; border-radius: 28px; overflow: hidden;
+      border: 3px solid #333; background: #000;
+      box-shadow: 0 20px 60px rgba(0,0,0,.5);
+      transition: transform .3s;
+    }
+    .phone-frame:hover { transform: translateY(-4px); }
+    .phone-frame img { width: 100%; display: block; }
+    .phone-frame.phone-center {
+      width: 210px;
+      border-color: var(--green);
+      box-shadow: 0 24px 70px rgba(0,0,0,.6), 0 0 40px rgba(29,185,84,.1);
+    }
+    .phone-frame.phone-side { opacity: .7; }
+    @media (max-width: 640px) {
+      .hero-mockups { gap: 10px; margin-top: 32px; }
+      .phone-frame { width: 120px; border-radius: 20px; border-width: 2px; }
+      .phone-frame.phone-center { width: 150px; }
+    }
+    @media (max-width: 420px) {
+      .phone-frame.phone-side { display: none; }
+      .phone-frame.phone-center { width: 200px; }
+    }
+
+    .icon-svg { width: 20px; height: 20px; fill: currentColor; }
+
+    .search-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.6);
+      z-index: 300; opacity: 0; pointer-events: none;
+      transition: opacity .2s cubic-bezier(.4,0,.2,1);
+      display: flex; align-items: flex-start; justify-content: center;
+      padding-top: min(20vh, 140px);
+    }
+    .search-overlay.open { opacity: 1; pointer-events: auto; }
+    .search-modal {
+      background: var(--surface); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 16px; width: 580px; max-width: calc(100vw - 32px);
+      max-height: min(70vh, 520px); display: flex; flex-direction: column;
+      box-shadow: 0 16px 70px rgba(0,0,0,.6);
+      transform: translateY(-12px) scale(.97); opacity: 0;
+      transition: transform .25s cubic-bezier(.4,0,.2,1), opacity .2s;
+    }
+    .search-overlay.open .search-modal { transform: translateY(0) scale(1); opacity: 1; }
+    .search-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .search-header svg { width: 18px; height: 18px; fill: var(--text-dim); flex-shrink: 0; }
+    .search-input {
+      flex: 1; background: none; border: none; outline: none;
+      color: var(--text); font-size: .95rem; font-family: inherit;
+    }
+    .search-input::placeholder { color: var(--text-dim); }
+    .search-esc {
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 4px; padding: 2px 7px; font-size: .72rem;
+      color: var(--text-dim); font-family: inherit; cursor: pointer;
+    }
+    .search-esc:hover { background: rgba(255,255,255,.14); }
+    .search-body { overflow-y: auto; padding: 8px; scrollbar-width: thin; scrollbar-color: #333 transparent; }
+    .search-body::-webkit-scrollbar { width: 6px; }
+    .search-body::-webkit-scrollbar-track { background: transparent; }
+    .search-body::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    .search-group-label {
+      padding: 8px 10px 4px; font-size: .72rem; font-weight: 600;
+      color: var(--text-dim); text-transform: uppercase; letter-spacing: .04em;
+    }
+    .search-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 10px; cursor: pointer;
+      color: var(--text); font-size: .88rem; transition: background .15s;
+    }
+    .search-item:hover, .search-item.active { background: rgba(255,255,255,.07); }
+    .search-item svg { width: 16px; height: 16px; fill: var(--text-dim); flex-shrink: 0; }
+    .search-item-text { flex: 1; min-width: 0; }
+    .search-item-title { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .search-item-section { font-size: .78rem; color: var(--text-dim); margin-top: 1px; }
+    .search-item mark { background: rgba(29,185,84,.25); color: var(--text); border-radius: 2px; padding: 0 1px; }
+    .search-item .search-enter { color: var(--text-dim); font-size: .72rem; opacity: 0; transition: opacity .15s; }
+    .search-item.active .search-enter { opacity: 1; }
+    .search-empty { padding: 32px 16px; text-align: center; color: var(--text-dim); font-size: .9rem; }
+    .search-footer {
+      padding: 10px 16px; border-top: 1px solid rgba(255,255,255,.06);
+      display: flex; align-items: center; gap: 16px; font-size: .72rem; color: #555;
+    }
+    .search-footer kbd {
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.08);
+      border-radius: 3px; padding: 1px 4px; font-family: inherit; font-size: .68rem;
+    }
+    @media (max-width: 640px) {
+      .search-trigger kbd { display: none; }
+      .search-overlay { padding-top: 16px; }
+      .search-modal { max-height: 80vh; border-radius: 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a class="nav-brand" href="#">
+      <img src="icon.png" alt="SpotiFLAC">
+      SpotiFLAC Mobile
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="downloads">Downloads</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li><a href="partners">Partners</a></li>
+      <li><a href="docs">Docs</a></li>
+      <li class="nav-divider"></li>
+      <li><button class="search-trigger" onclick="openSearch()" aria-label="Search documentation">
+        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        Search
+        <kbd id="searchShortcutHint">Ctrl K</kbd>
+      </button></li>
+      <li><a href="https://github.com/zarzet/SpotiFLAC-Mobile" target="_blank" class="nav-icon" aria-label="GitHub"><svg viewBox="0 0 24 24"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.82-.26.82-.57L9 20.86c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.74.08-.73.08-.73 1.2.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6.02 0c2.28-1.55 3.29-1.23 3.29-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.92.43.37.81 1.1.81 2.22l-.01 3.29c0 .31.21.69.82.57A12 12 0 0 0 12 .3"/></svg></a></li>
+      <li><a href="https://t.me/spotiflac" target="_blank" class="nav-icon" aria-label="Telegram"><svg viewBox="0 0 24 24"><path d="M11.94 24c6.6 0 12-5.4 12-12s-5.4-12-12-12-12 5.4-12 12 5.4 12 12 12zm-3.2-8.69l-.37-3.04 8.52-5.18c.38-.23.73.09.45.35l-6.96 6.4-.29 2.97c-.04.35-.48.43-.64.12l-1.64-3.33-3.6-1.17c-.78-.24-.8-.78-.02-1.14l14.04-5.4c.65-.25 1.25.15 1.04.83l-2.39 11.28c-.18.81-.7 1.01-1.42.63l-3.92-2.89-1.89 1.82c-.21.2-.39.38-.65.38l.28-3.06z"/></svg></a></li>
+    </ul>
+    <button class="nav-burger" onclick="toggleMenu()" aria-label="Menu">
+      <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+    </button>
+  </div>
+</nav>
+
+<div class="mobile-overlay" id="mobileOverlay" onclick="toggleMenu()"></div>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#features">Features</a>
+  <a href="downloads">Downloads</a>
+  <a href="#faq">FAQ</a>
+  <a href="partners">Partners</a>
+  <a href="docs">Docs</a>
+  <a href="javascript:void(0)" onclick="toggleMenu();openSearch()" style="display:flex;align-items:center;gap:6px;color:var(--text-dim)"><svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>Search Docs</a>
+  <div class="mobile-divider"></div>
+  <div class="mobile-icons">
+    <a href="https://github.com/zarzet/SpotiFLAC-Mobile" target="_blank" aria-label="GitHub">
+      <svg viewBox="0 0 24 24"><path d="M12 .3a12 12 0 00-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.5-1.4-1.3-1.8-1.3-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.3.5-2.3 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.4 1.2a11.5 11.5 0 016 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.7.3 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0012 .3z"/></svg>
+    </a>
+    <a href="https://t.me/spotiflac" target="_blank" aria-label="Telegram">
+      <svg viewBox="0 0 24 24"><path d="M11.94 24c6.6 0 12-5.4 12-12s-5.4-12-12-12-12 5.4-12 12 5.4 12 12 12zm-3.2-8.69l-.37-3.04 8.52-5.18c.38-.23.73.09.45.35l-6.96 6.4-.29 2.97c-.04.35-.48.43-.64.12l-1.64-3.33-3.6-1.17c-.78-.24-.8-.78-.02-1.14l14.04-5.4c.65-.25 1.25.15 1.04.83l-2.39 11.28c-.18.81-.7 1.01-1.42.63l-3.92-2.89-1.89 1.82c-.21.2-.39.38-.65.38l.28-3.06z"/></svg>
+    </a>
+  </div>
+</div>
+
+<section class="hero">
+  <h1>Spoti<span>FLAC</span> Mobile</h1>
+  <p>Mobile music utility built with Flutter and Go. High-quality audio management for your personal library.</p>
+  <div class="hero-badges">
+    <span class="badge">
+      <svg class="icon-svg" viewBox="0 0 24 24"><path d="M6 18c0 .55.45 1 1 1h1v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h2v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h1c.55 0 1-.45 1-1V7H6v11zM3.5 7C2.67 7 2 7.67 2 8.5v7c0 .83.67 1.5 1.5 1.5S5 16.33 5 15.5v-7C5 7.67 4.33 7 3.5 7zm17 0c-.83 0-1.5.67-1.5 1.5v7c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-7c0-.83-.67-1.5-1.5-1.5zm-4.97-5.84l1.3-1.3c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0l-1.48 1.48A5.84 5.84 0 0012 0c-.96 0-1.86.23-2.66.63L7.85.15c-.2-.2-.51-.2-.71 0-.2.2-.2.51 0 .71l1.31 1.31A5.983 5.983 0 006 6h12c0-2.21-1.2-4.15-2.97-5.18-.25-.14-.4-.24-.5-.36v-.3zM10 4H9V3h1v1zm5 0h-1V3h1v1z"/></svg>
+      Android 7.0+
+    </span>
+    <span class="badge">
+      <svg class="icon-svg" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+      iOS 14.0+
+    </span>
+
+  </div>
+  <div class="hero-actions">
+    <a class="btn btn-primary" href="downloads">
+      <svg class="icon-svg" viewBox="0 0 24 24"><path fill="#000" d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+      Download
+    </a>
+    <a class="btn btn-secondary" href="docs">
+      <svg class="icon-svg" viewBox="0 0 24 24"><path fill="currentColor" d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+      Docs
+    </a>
+  </div>
+  <div class="hero-mockups">
+    <div class="phone-frame phone-side"><img src="images/2.jpg" alt="Search" loading="lazy"></div>
+    <div class="phone-frame phone-center"><img src="images/1.jpg" alt="Home screen" loading="lazy"></div>
+    <div class="phone-frame phone-side"><img src="images/3.jpg" alt="History" loading="lazy"></div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="section-inner">
+    <h2 class="section-title">Features</h2>
+    <p class="section-sub">Everything you need to build a high-quality music library on your phone.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg class="icon-svg" viewBox="0 0 24 24"><path fill="currentColor" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+        </div>
+        <h3>True Lossless FLAC</h3>
+        <p>Download in up to 24-bit/192kHz quality. No transcoding, no quality loss. Pure studio-grade audio files.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg class="icon-svg" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+        </div>
+        <h3>Multiple Providers</h3>
+        <p>Download from Tidal, Qobuz, Deezer, and more via extensions. Automatic fallback if a source is unavailable.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg class="icon-svg" viewBox="0 0 24 24"><path fill="currentColor" d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5a2.5 2.5 0 00-5 0V5H4c-1.1 0-2 .9-2 2v3.8h1.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7s2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5a2.5 2.5 0 000-5z"/></svg>
+        </div>
+        <h3>Extensions</h3>
+        <p>Community-built extensions add new music sources and features. Install from the built-in Store with one tap.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg class="icon-svg" viewBox="0 0 24 24"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        </div>
+        <h3>Search by Link or Name</h3>
+        <p>Paste a Spotify, Tidal, Qobuz, or Deezer link. Or just search by song name &mdash; it handles the rest.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg class="icon-svg" viewBox="0 0 24 24"><path fill="currentColor" d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12zm-6-1l-4-4.8h3V5h2v4.2h3L14 14z"/></svg>
+        </div>
+        <h3>Batch & Playlist Download</h3>
+        <p>Download entire albums and playlists at once. Smart queue management that downloads one track at a time.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg class="icon-svg" viewBox="0 0 24 24"><path fill="currentColor" d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14zM5 15h14v3H5z"/></svg>
+        </div>
+        <h3>Rich Metadata</h3>
+        <p>Full metadata embedding &mdash; album art, lyrics, genre, label, copyright, and more. All embedded in the FLAC file.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section id="faq">
+  <div class="section-inner">
+    <h2 class="section-title">FAQ</h2>
+    <p class="section-sub">Common questions about SpotiFLAC Mobile.</p>
+    <div class="faq-list">
+      <details class="faq-item">
+        <summary>Why is my download failing with "Song not found"?</summary>
+        <div class="faq-answer">The track may not be available on the streaming services. Try enabling more download services in Settings &gt; Download &gt; Provider Priority, or install additional extensions like Amazon Music from the Store.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Why are some tracks downloading in lower quality?</summary>
+        <div class="faq-answer">Quality depends on what's available from the streaming service and extensions. Built-in providers: Tidal offers up to 24-bit/192kHz, Qobuz up to 24-bit/192kHz, and Deezer up to 16-bit/44.1kHz.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Can I download entire playlists?</summary>
+        <div class="faq-answer">Yes! Just paste the playlist URL in the search bar. The app will fetch all tracks and queue them for download.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Why do I need to grant storage permission?</summary>
+        <div class="faq-answer">The app needs permission to save downloaded files to your device. On Android 13+, you may need to grant "All files access" in Settings &gt; Apps &gt; SpotiFLAC &gt; Permissions.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Is this app safe?</summary>
+        <div class="faq-answer">Yes, the app is fully open source. You can verify the code yourself on GitHub. Each release is scanned with VirusTotal.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Download not working in my country?</summary>
+        <div class="faq-answer">Some countries have restricted access to certain streaming service APIs. If downloads are failing, try using a VPN to connect through a different region.</div>
+      </details>
+      <details class="faq-item">
+        <summary>How do I create my own extension?</summary>
+        <div class="faq-answer">Check out the <a href="docs">Extension Development Guide</a> for complete documentation on building custom extensions.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<div class="search-overlay" id="searchOverlay" onclick="if(event.target===this)closeSearch()">
+  <div class="search-modal">
+    <div class="search-header">
+      <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+      <input class="search-input" id="searchInput" type="text" placeholder="Search documentation..." autocomplete="off" spellcheck="false">
+      <button class="search-esc" onclick="closeSearch()">Esc</button>
+    </div>
+    <div class="search-body" id="searchBody">
+      <div class="search-empty">Type to search across all documentation sections</div>
+    </div>
+    <div class="search-footer">
+      <span><kbd>&uarr;</kbd> <kbd>&darr;</kbd> to navigate</span>
+      <span><kbd>Enter</kbd> to select</span>
+      <span><kbd>Esc</kbd> to close</span>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-links">
+      <a href="https://github.com/zarzet/SpotiFLAC-Mobile/releases" target="_blank">Download</a>
+      <a href="docs">Documentation</a>
+      <a href="https://github.com/zarzet/SpotiFLAC-Mobile" target="_blank">GitHub</a>
+      <a href="https://github.com/afkarxyz/SpotiFLAC" target="_blank">Desktop Version</a>
+      <a href="https://t.me/spotiflac" target="_blank">Telegram Channel</a>
+      <a href="https://t.me/spotiflac_chat" target="_blank">Community</a>
+      <a href="https://ko-fi.com/zarzet" target="_blank">Support / Ko-fi</a>
+      <a href="https://crowdin.com/project/spotiflac-mobile" target="_blank">Help Translate</a>
+    </div>
+    <p class="footer-copy">SpotiFLAC is for educational and private use only. Not affiliated with any streaming service.</p>
+    <p class="footer-copy">&copy; 2026 SpotiFLAC &middot; Open Source &middot; <a href="https://opensource.org/license/mit" target="_blank" style="color:inherit;text-decoration:underline">MIT Licensed</a></p>
+  </div>
+</footer>
+
+
+<script>
+function toggleMenu() {
+  document.getElementById('mobileMenu').classList.toggle('open');
+  document.getElementById('mobileOverlay').classList.toggle('open');
+  document.querySelector('.nav-burger').classList.toggle('active');
+}
+document.getElementById('mobileMenu').addEventListener('click', function(e) {
+  if (e.target.closest('a')) toggleMenu();
+});
+</script>
+<script>
+(function() {
+  var overlay = document.getElementById('searchOverlay');
+  var input = document.getElementById('searchInput');
+  var body = document.getElementById('searchBody');
+  var hintEl = document.getElementById('searchShortcutHint');
+  var activeIdx = -1;
+  var results = [];
+
+  if (navigator.platform && navigator.platform.indexOf('Mac') > -1) {
+    if (hintEl) hintEl.textContent = '\u2318 K';
+  }
+
+  var searchIndex = [{"id":"table-of-contents","title":"Table of Contents","level":2,"section":"Table of Contents"},{"id":"introduction","title":"Introduction","level":2,"section":"Introduction"},{"id":"requirements","title":"Requirements","level":3,"section":"Introduction"},{"id":"extension-structure","title":"Extension Structure","level":2,"section":"Extension Structure"},{"id":"manifest-file","title":"Manifest File","level":2,"section":"Manifest File"},{"id":"complete-manifest-example","title":"Complete Manifest Example","level":3,"section":"Manifest File"},{"id":"manifest-fields","title":"Manifest Fields","level":3,"section":"Manifest File"},{"id":"quality-options","title":"Quality Options","level":3,"section":"Manifest File"},{"id":"quality-specific-settings","title":"Quality-Specific Settings","level":3,"section":"Manifest File"},{"id":"permissions","title":"Permissions","level":3,"section":"Manifest File"},{"id":"extension-types","title":"Extension Types","level":3,"section":"Manifest File"},{"id":"settings","title":"Settings","level":3,"section":"Manifest File"},{"id":"button-setting-type","title":"Button Setting Type","level":3,"section":"Manifest File"},{"id":"custom-search-behavior","title":"Custom Search Behavior","level":3,"section":"Manifest File"},{"id":"thumbnail-ratio-presets","title":"Thumbnail Ratio Presets","level":4,"section":"Manifest File"},{"id":"custom-url-handler","title":"Custom URL Handler","level":3,"section":"Manifest File"},{"id":"album--playlist-functions-v301","title":"Album & Playlist Functions (v3.0.1+)","level":3,"section":"Manifest File"},{"id":"artist-support","title":"Artist Support","level":3,"section":"Manifest File"},{"id":"home-feed-support","title":"Home Feed Support","level":3,"section":"Manifest File"},{"id":"track-enrichment","title":"Track Enrichment","level":3,"section":"Manifest File"},{"id":"custom-track-matching","title":"Custom Track Matching","level":3,"section":"Manifest File"},{"id":"post-processing-hooks","title":"Post-Processing Hooks","level":3,"section":"Manifest File"},{"id":"post-process-api-v2-recommended","title":"Post-Process API v2 (Recommended)","level":4,"section":"Manifest File"},{"id":"main-script","title":"Main Script","level":2,"section":"Main Script"},{"id":"basic-structure","title":"Basic Structure","level":3,"section":"Main Script"},{"id":"important-registerextension","title":"Important: registerExtension()","level":3,"section":"Main Script"},{"id":"api-reference","title":"API Reference","level":2,"section":"API Reference"},{"id":"http-api","title":"HTTP API","level":3,"section":"API Reference"},{"id":"request-headers","title":"Request Headers","level":4,"section":"API Reference"},{"id":"response-object","title":"Response Object","level":4,"section":"API Reference"},{"id":"form-encoded-post-applicationx-www-form-urlencoded","title":"Form-Encoded POST (application/x-www-form-urlencoded)","level":4,"section":"API Reference"},{"id":"cookie-jar","title":"Cookie Jar","level":4,"section":"API Reference"},{"id":"youtube-music--innertube-api-example","title":"YouTube Music / Innertube API Example","level":4,"section":"API Reference"},{"id":"browser-like-polyfills","title":"Browser-like Polyfills","level":3,"section":"API Reference"},{"id":"fetch-api","title":"fetch() API","level":4,"section":"API Reference"},{"id":"atob--btoa","title":"atob() / btoa()","level":4,"section":"API Reference"},{"id":"textencoder--textdecoder","title":"TextEncoder / TextDecoder","level":4,"section":"API Reference"},{"id":"url--urlsearchparams","title":"URL / URLSearchParams","level":4,"section":"API Reference"},{"id":"porting-browser-libraries","title":"Porting Browser Libraries","level":4,"section":"API Reference"},{"id":"storage-api","title":"Storage API","level":3,"section":"API Reference"},{"id":"file-api","title":"File API","level":3,"section":"API Reference"},{"id":"logging-api","title":"Logging API","level":3,"section":"API Reference"},{"id":"utility-api","title":"Utility API","level":3,"section":"API Reference"},{"id":"hmac-sha1-for-totp","title":"HMAC-SHA1 for TOTP","level":4,"section":"API Reference"},{"id":"hmac-sha256-example-api-signing","title":"HMAC-SHA256 Example (API Signing)","level":4,"section":"API Reference"},{"id":"go-backend-api","title":"Go Backend API","level":3,"section":"API Reference"},{"id":"using-getlocaltime-for-time-based-greeting","title":"Using getLocalTime() for Time-Based Greeting","level":4,"section":"API Reference"},{"id":"using-getlocaltime-for-timezone-in-api-calls","title":"Using getLocalTime() for Timezone in API Calls","level":4,"section":"API Reference"},{"id":"credentials-api-encrypted","title":"Credentials API (Encrypted)","level":3,"section":"API Reference"},{"id":"auth-api-oauth-support","title":"Auth API (OAuth Support)","level":3,"section":"API Reference"},{"id":"pkce-oauth-flow-recommended","title":"PKCE OAuth Flow (Recommended)","level":3,"section":"API Reference"},{"id":"quick-start-high-level-api","title":"Quick Start (High-Level API)","level":4,"section":"API Reference"},{"id":"low-level-api-manual-control","title":"Low-Level API (Manual Control)","level":4,"section":"API Reference"},{"id":"pkce-api-reference","title":"PKCE API Reference","level":4,"section":"API Reference"},{"id":"complete-oauth-example","title":"Complete OAuth Example","level":4,"section":"API Reference"},{"id":"crypto-utilities","title":"Crypto Utilities","level":3,"section":"API Reference"},{"id":"ffmpeg-api-post-processing","title":"FFmpeg API (Post-Processing)","level":3,"section":"API Reference"},{"id":"track-matching-api","title":"Track Matching API","level":3,"section":"API Reference"},{"id":"extension-examples","title":"Extension Examples","level":2,"section":"Extension Examples"},{"id":"example-1-simple-metadata-provider","title":"Example 1: Simple Metadata Provider","level":3,"section":"Extension Examples"},{"id":"example-2-download-provider-with-auth","title":"Example 2: Download Provider with Auth","level":3,"section":"Extension Examples"},{"id":"packaging--distribution","title":"Packaging & Distribution","level":2,"section":"Packaging & Distribution"},{"id":"project-structure","title":"Project Structure","level":3,"section":"Packaging & Distribution"},{"id":"module-system-limitation","title":"Module System Limitation","level":3,"section":"Packaging & Distribution"},{"id":"creating-extension-file","title":"Creating Extension File","level":3,"section":"Packaging & Distribution"},{"id":"installing-extension","title":"Installing Extension","level":3,"section":"Packaging & Distribution"},{"id":"upgrading-extension","title":"Upgrading Extension","level":3,"section":"Packaging & Distribution"},{"id":"troubleshooting","title":"Troubleshooting","level":2,"section":"Troubleshooting"},{"id":"error-extension-did-not-call-registerextension","title":"Error: extension did not call registerExtension()","level":3,"section":"Troubleshooting"},{"id":"error-permission-denied-for-domain-x--network-access-denied","title":"Error: Permission denied for domain X / network access denied","level":3,"section":"Troubleshooting"},{"id":"error-post-body-is-object-object","title":"Error: POST body is [object Object]","level":3,"section":"Troubleshooting"},{"id":"error-function-x-is-not-defined","title":"Error: Function X is not defined","level":3,"section":"Troubleshooting"},{"id":"error-invalid-manifest","title":"Error: Invalid manifest","level":3,"section":"Troubleshooting"},{"id":"extension-doesnt-appear-after-install","title":"Extension doesn't appear after install","level":3,"section":"Troubleshooting"},{"id":"http-request-fails","title":"HTTP request fails","level":3,"section":"Troubleshooting"},{"id":"download-fails","title":"Download fails","level":3,"section":"Troubleshooting"},{"id":"error-file-access-denied-extension-does-not-have-file-permission","title":"Error: file access denied: extension does not have file permission","level":3,"section":"Troubleshooting"},{"id":"error-file-access-denied-absolute-paths-are-not-allowed","title":"Error: file access denied: absolute paths are not allowed","level":3,"section":"Troubleshooting"},{"id":"error-file-access-denied-path-x-is-outside-sandbox","title":"Error: file access denied: path X is outside sandbox","level":3,"section":"Troubleshooting"},{"id":"error-cannot-downgrade-extension","title":"Error: Cannot downgrade extension","level":3,"section":"Troubleshooting"},{"id":"error-extension-is-already-installed","title":"Error: Extension is already installed","level":3,"section":"Troubleshooting"},{"id":"error-timeout-extension-took-too-long-to-respond","title":"Error: timeout: extension took too long to respond","level":3,"section":"Troubleshooting"},{"id":"thumbnails-not-showing-correctly-in-search-results","title":"Thumbnails not showing correctly in search results","level":3,"section":"Troubleshooting"},{"id":"technical-details--behavior","title":"Technical Details & Behavior","level":2,"section":"Technical Details & Behavior"},{"id":"token-refresh-handling","title":"Token Refresh Handling","level":3,"section":"Technical Details & Behavior"},{"id":"storage-limits","title":"Storage Limits","level":3,"section":"Technical Details & Behavior"},{"id":"file-api-path-resolution","title":"File API Path Resolution","level":3,"section":"Technical Details & Behavior"},{"id":"http-redirect-handling","title":"HTTP Redirect Handling","level":3,"section":"Technical Details & Behavior"},{"id":"standard-error-types","title":"Standard Error Types","level":3,"section":"Technical Details & Behavior"},{"id":"http-timeout","title":"HTTP Timeout","level":3,"section":"Technical Details & Behavior"},{"id":"tips--best-practices","title":"Tips & Best Practices","level":2,"section":"Tips & Best Practices"},{"id":"authentication-api","title":"Authentication API","level":2,"section":"Authentication API"},{"id":"auth-api-reference","title":"Auth API Reference","level":3,"section":"Authentication API"},{"id":"credentials-api-encrypted-storage","title":"Credentials API (Encrypted Storage)","level":3,"section":"Authentication API"},{"id":"crypto-utilities-1","title":"Crypto Utilities","level":3,"section":"Authentication API"},{"id":"oauth-flow-example","title":"OAuth Flow Example","level":3,"section":"Authentication API"},{"id":"data-schema-reference","title":"Data Schema Reference","level":2,"section":"Data Schema Reference"},{"id":"track-object","title":"Track Object","level":3,"section":"Data Schema Reference"},{"id":"album-object","title":"Album Object","level":3,"section":"Data Schema Reference"},{"id":"artist-object","title":"Artist Object","level":3,"section":"Data Schema Reference"},{"id":"download-result-object","title":"Download Result Object","level":3,"section":"Data Schema Reference"},{"id":"skip-metadata-enrichment","title":"Skip Metadata Enrichment","level":3,"section":"Data Schema Reference"},{"id":"changelog","title":"Changelog","level":2,"section":"Changelog"},{"id":"support","title":"Support","level":2,"section":"Support"}];
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function highlight(text, query) {
+    if (!query) return escHtml(text);
+    var escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    var re = new RegExp('(' + escaped + ')', 'gi');
+    return escHtml(text).replace(re, '<mark>$1</mark>');
+  }
+
+  function doSearch(query) {
+    query = query.trim().toLowerCase();
+    if (!query) {
+      body.innerHTML = '<div class="search-empty">Type to search across all documentation sections</div>';
+      results = []; activeIdx = -1; return;
+    }
+    var tokens = query.split(/\s+/).filter(Boolean);
+    var scored = [];
+    searchIndex.forEach(function(item) {
+      var titleLow = item.title.toLowerCase();
+      var sectionLow = item.section.toLowerCase();
+      var score = 0;
+      for (var i = 0; i < tokens.length; i++) {
+        var t = tokens[i];
+        if (titleLow.includes(t)) {
+          score += titleLow === t ? 100 : titleLow.startsWith(t) ? 60 : 30;
+        } else if (sectionLow.includes(t)) {
+          score += 10;
+        }
+      }
+      if (score > 0 && item.level === 2) score += 8;
+      if (score > 0 && item.level === 1) score += 15;
+      if (score > 0) scored.push({ item: item, score: score });
+    });
+    scored.sort(function(a, b) { return b.score - a.score; });
+    results = scored.slice(0, 20);
+    activeIdx = results.length > 0 ? 0 : -1;
+    if (!results.length) {
+      body.innerHTML = '<div class="search-empty">No results found for "' + escHtml(query) + '"</div>';
+      return;
+    }
+    var hashIcon = '<svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>';
+    var html = '';
+    results.forEach(function(r, i) {
+      var cls = i === activeIdx ? ' active' : '';
+      var sectionHint = r.item.section && r.item.section !== r.item.title ? r.item.section : '';
+      html += '<div class="search-item' + cls + '" data-idx="' + i + '" data-id="' + r.item.id + '">' +
+        hashIcon +
+        '<div class="search-item-text">' +
+          '<div class="search-item-title">' + highlight(r.item.title, query) + '</div>' +
+          (sectionHint ? '<div class="search-item-section">' + escHtml(sectionHint) + '</div>' : '') +
+        '</div>' +
+        '<span class="search-enter">\u21B5</span>' +
+      '</div>';
+    });
+    body.innerHTML = html;
+    body.querySelectorAll('.search-item').forEach(function(el) {
+      el.addEventListener('click', function() { navigateTo(el.dataset.id); });
+      el.addEventListener('mouseenter', function() { setActive(parseInt(el.dataset.idx)); });
+    });
+  }
+
+  function setActive(idx) {
+    if (idx === activeIdx) return;
+    var items = body.querySelectorAll('.search-item');
+    if (items[activeIdx]) items[activeIdx].classList.remove('active');
+    activeIdx = idx;
+    if (items[activeIdx]) {
+      items[activeIdx].classList.add('active');
+      items[activeIdx].scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  function navigateTo(id) {
+    closeSearch();
+    window.location.href = 'docs#' + id;
+  }
+
+  window.openSearch = function() {
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    input.value = '';
+    doSearch('');
+    setTimeout(function() { input.focus(); }, 50);
+  };
+
+  window.closeSearch = function() {
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+    activeIdx = -1;
+  };
+
+  input.addEventListener('input', function() { doSearch(input.value); });
+
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (results.length) setActive(Math.min(activeIdx + 1, results.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (results.length) setActive(Math.max(activeIdx - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (results[activeIdx]) navigateTo(results[activeIdx].item.id);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      closeSearch();
+    }
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      if (overlay.classList.contains('open')) { closeSearch(); } else { openSearch(); }
+    }
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      openSearch();
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
