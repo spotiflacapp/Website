@@ -4,8 +4,14 @@ Official website for the SpotiFLAC Mobile app.
 
 ## Structure
 
-- `index.html` - Landing page
-- `downloads.html` - Download links
-- `docs.html` - Documentation
-- `partners.html` - Partners
-- `images/` - Static assets
+All site files live in the [`website/`](website/) folder:
+
+- `website/index.html` - Landing page
+- `website/downloads.html` - Download links
+- `website/docs.html` - Documentation
+- `website/partners.html` - Partners
+- `website/images/` - Static assets
+
+## License
+
+Released under the [MIT License](LICENSE).
